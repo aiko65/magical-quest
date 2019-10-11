@@ -1,0 +1,6 @@
+C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\obj\Debug\Project1.csprojAssemblyReference.cache
+C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\bin\Debug\Project1.exe.config
+C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\bin\Debug\Project1.exe
+C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\bin\Debug\Project1.pdb
+C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\obj\Debug\Project1.exe
+C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\obj\Debug\Project1.pdb
