@@ -1,0 +1,858 @@
+*prog_BOF
+/*---------------------------------------------------------
+　　■　■　　　　　■　　　　■■■■■　　■■■■■　　
+　　■　■　　　　　■　　　■　　　　　■　　　■　　　　
+　　■　■　　　　　■　　　■　　　　　■　　　■　　　　
+　■　■　■　　　■　■　　■　　　　　　　　　■　　　　
+　■　■　■　　　■　■　　■　　　　　　　　　■　　　　
+　■　■　■　　　■　■　　■　　■■■■　　　■　　　　
+■　　■　　■　■■■■■　■　　　　　■　　　■　　　　
+■　　■　　■　■　　　■　■　　　　　■　　　■　　　　
+■　　■　　■　■　　　■　　■■■■■　　■■■■■　　
+　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+　　■■■　　　　■　　　■　　　　　　　　　　　　　　　
+　■　　　■　　　■　　　■　　　　　　　　　　　　　　　
+■　　　　　　　　■　　　■　　　　　　　　　　　　　　　
+■　　　　　　　■　■　　■　　　　　　　　　　　　　　　
+■　　　　　　　■　■　　■　　　　　　　　　　　　　　　
+■　　　　　　　■　■　　■　　　　　　　　　　　　　　　
+■　　　　　　■■■■■　■　　　　　　　　　　　　　　　
+　■　　　■　■　　　■　■　　　　　　　　　　　　　　　
+　　■■■　　■　　　■　■■■■■■　　　　　　　　　　
+　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+　■■■■　　■　　　■　■■■■　　■■■■　■■■■■
+■　　　　■　■　　　■　■　　　　■　　　　　　　■　　
+■　　　　■　■　　　■　■　　　　■　　　　　　　■　　
+■　　　　■　■　　　■　■　　　　■　　　　　　　■　　
+■　　　　■　■　　　■　■■■■　　■■■　　　　■　　
+■　　　　■　■　　　■　■　　　　　　　　■　　　■　　
+■　■■　■　■　　　■　■　　　　　　　　■　　　■　　
+■　■　■■　■　　　■　■　　　　　　　　■　　　■　　
+　■■■■■　　■■■　　■■■■　■■■■　　　　■　　
+　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+
+
+
+---------------------------------------------------------*/
+*prog_macro
+//#define log prog_debuglog = prog_debuglog + "\n" +gettime(4) + ":" + gettime(5) + ":" + gettime(6) + "." + gettime(7) + "	: " +
+#define log logmes "" + gettime(4) + ":" + gettime(5) + ":" + gettime(6) + "." + gettime(7) + " 	: " +
+#define pday gettime(0) + "/"+ gettime(1) + "/" + gettime(3) + " "
+#define ptime gettime(4) + ":" + gettime(5) + ":" + gettime(6) + "." + gettime(7)
+
+
+*prog_start
+	onerror goto *prog_error
+	
+	randomize
+*prog_varreset
+	mes "初期化中..."
+	log "初期化開始"
+	common_myhp = 0
+	common_myexp = 0
+	common_mylevel = 0
+	battle_attackamount = 0
+	enemy_hp = 0
+	battle_remainexp = 0
+	battle_oldlevel = 0
+	battle_myexpadd = 0
+	game_savedatep = 0
+	game_load_status = 0
+	battle_currentenemyID = 0
+	
+	i = 0
+	j = 0
+	k = 0
+	
+	
+	prog_errc = ""
+	prog_debug1 = ""
+	prog_debug2 = ""
+	wtext = ""
+	wtext2 = ""
+	prog_debuglog = ""
+	enemydate = ""
+	enemy_name = ""
+	log "変数初期化完了"
+*prog_dim
+	dim item_have
+	sdim enemies_name
+	dim enemiesHP
+	dim enemiesimg
+	dim enemieshpr
+	dim enemiesAPr
+	dim enemiesAP
+	dim enemiesExp
+	dim enemiesExpr
+	
+	log "配列初期化完了"
+	
+	wait 30
+	mes "初期化終了..."
+	wait 30
+*game_title
+	cls
+	mes "マジカルクエスト"
+	button "はじめから",*game_start_nodate
+	button "つづきから",*game_start_continue
+	button "終わる",*game_end
+	stop
+*game_end
+	end
+*game_start_nodate
+	cls
+	mes "セーブデータ作成中..."
+	game_savedatep = "def:none"
+	common_myhp = 100
+	wait 30
+	goto *game_reset
+
+*game_start_continue
+	cls
+	dialog "svm",16,"マジカルクエストセーブファイル"
+	wtext = ""
+	notesel wtext
+	game_savedatep = refstr
+	noteload game_savedatep
+	noteget i,0
+	if i != 1 {
+		prog_debug1 = "セーブデータのバージョンが異なります。"
+		prog_debug2 = "セーブデータバージョン変換ツールを使用してバージョンを1にしてください"
+		prog_errc = "E160"
+		goto *prog_error
+	}
+	noteget common_myhp,0
+	noteget commoon_myexp,1
+	noteget item_have(0),2
+	common_mylevel = common_myexp/100
+	goto *game_reset
+
+*game_reset
+	wait 15
+	
+	mes "敵の情報を読み込んでいます..."
+	enemydate = ""
+	notesel enemydate
+	noteload "enemy.txt"
+	wait 15
+	mes "敵の情報を解析しています..."
+	i = 0		;現在の行
+	j = 0		;現在の敵ID
+*game_date_analysis
+	log "敵情報ファイル解析開始"
+	repeat
+		k = 0					;読み込みフラグ
+		log i + "行目読み込み開始"
+		noteget wtext2,i
+		if i >= noteinfo(0) {
+			break
+		}
+		if wtext2 == "start" {
+			if game_load_status = 0 {
+				game_load_status = 1
+				i ++
+				j ++
+			}else{
+				prog_debug1 = "敵の情報ファイルが破損しています。"
+				prog_debug2 = "エラー番号は@E100です。製作者に報告してください。"
+				prog_errc = "E100"
+				goto *prog_error
+			}
+			k = 1
+		}
+		if wtext2 == "End" {
+			if game_load_status = 0 {
+				prog_debug1 = "敵の情報ファイルが破損しています。"
+				prog_debug2 = "エラー番号は@E150です。製作者に報告してください。"
+				prog_errc = "E150"
+				goto *prog_error
+			}else{
+				game_load_status = 0
+				i ++
+				k = 1
+				log "敵情報解析終了"
+			}
+		}
+		if wtext2 == "comment" {
+			log "コメントを認識"
+			i += 2
+			k = 1
+		}
+		if wtext2 == "Name" {
+			noteget wtext,i+1
+			if game_load_status = 1 {
+				log "敵の名前を認識:" + wtext
+				enemies_name(j) = wtext
+				i += 2
+				k = 1
+			}else{
+				prog_debug1 = "" + i + "行目の、敵ID" + j+ "の敵の情報ファイルが破損しています。"
+				prog_debug2 = "エラー番号は@E101です。製作者に報告してください。"
+				prog_errc = "E101"
+				goto *prog_error
+			}
+			
+		}
+		if wtext2 == "ImagePos" {
+			noteget wtext,i+1
+			if game_load_status = 1 {
+				log "画像位置を認識"
+				enemiesimg(j) = int(wtext)
+				i += 2
+				k = 1
+			}else{
+				prog_debug1 = "" + i + "行目の、敵ID" + j+ "の敵の情報ファイルが破損しています。"
+				prog_debug2 = "エラー番号は@E102です。製作者に報告してください。"
+				prog_errc = "E102"
+				goto *prog_error
+			}
+
+		}
+		if wtext2 == "HP" {
+			noteget wtext,i+1
+			if game_load_status = 1 {
+				log "HP情報を認識"
+				enemieshp(j) = int(wtext)
+			i += 2
+			k = 1
+			}else{
+				prog_debug1 = "" + i + "行目の、敵ID" + j+ "の敵の情報ファイルが破損しています。"
+				prog_debug2 = "エラー番号は@E103です。製作者に報告してください。"
+				prog_errc = "E103"
+				goto *prog_error
+			}
+			
+		}
+		if wtext2 == "HPRange" {
+			noteget wtext,i+1
+			if game_load_status = 1 {
+				log "HPRangeを取得"
+				enemieshpr(j) = int(wtext)
+				i += 2
+				k = 1
+			}else{
+				prog_debug1 = "" + i + "行目の、敵ID" + j+ "の敵の情報ファイルが破損しています。"
+				prog_debug2 = "エラー番号は@E104です。製作者に報告してください。"
+				prog_errc = "E104"
+				goto *prog_error
+			}
+			
+		}
+		if wtext2 == "AttackPower" {
+			noteget wtext,i+1
+			if game_load_status = 1 {
+				log "攻撃力を認識"
+				enemiesAP(j) = int(wtext)
+				i += 2
+				k = 1
+			}else{
+				prog_debug1 = "" + i + "行目の、敵ID" + j+ "の敵の情報ファイルが破損しています。"
+				prog_debug2 = "エラー番号は@E105です。製作者に報告してください。"
+				prog_errc = "E105"
+				goto *prog_error
+			}
+		}
+		if wtext2 == "AtpRange" {
+			noteget wtext,i+1
+			if game_load_status = 1 {
+				log "atprangeを認識"
+				enemiesAPr(j) = int(wtext)
+				i += 2
+				k = 1
+			}else{
+				prog_debug1 = "" + i + "行目の、敵ID" + j+ "の敵の情報ファイルが破損しています。"
+				prog_debug2 = "エラー番号は@E106です。製作者に報告してください。"
+				prog_errc = "E106"
+				goto *prog_error
+			}
+			
+		}
+		if wtext2 == "GetExp" {
+			noteget wtext,i+1
+			if game_load_status = 1 {
+				log "取得経験値量を認識"
+				enemiesExp(j) = int(wtext)
+				i += 2
+				k = 1
+			}else{
+				prog_debug1 = "" + i + "行目の、敵ID" + j+ "の敵の情報ファイルが破損しています。"
+				prog_debug2 = "エラー番号は@E107です。製作者に報告してください。"
+				prog_errc = "E107"
+				goto *prog_error
+			}
+		}
+		if wtext2 == "GetExpRange" {
+			noteget wtext,i+1
+			if game_load_status = 1 {
+				log "取得経験値量rangeを認識"
+				enemiesExpr(j) = int(wtext)
+				i += 2
+				k = 1
+			}else{
+				prog_debug1 = "" + i + "行目の、敵ID" + j+ "の敵の情報ファイルが破損しています。"
+				prog_debug2 = "エラー番号は@E108です。製作者に報告してください。"
+				prog_errc = "E108"
+				goto *prog_error
+			}
+			
+		}
+		if wtext2 == "version" {
+			noteget wtext,i+1
+			if wtext == "1" {
+				log "バージョンを認識"
+				i += 2
+				k = 1
+			}else{
+				prog_debug1 = "" + i + "行目の、敵ID" + j+ "の敵の情報ファイルが未対応のバージョンです。"
+				prog_debug2 = "実行ファイルと同一の世代の敵情報ファイルをご利用ください。"
+				prog_errc = "E130"
+				goto *prog_error
+			}
+		}
+		if k == 0 {
+			prog_debug1 = "" + i + "行目の、敵ID" + j+ "の敵の情報ファイルが破損しています。"
+			prog_debug2 = "エラー番号は@E140です。製作者に報告してください。"
+			prog_errc = "E140"
+			goto *prog_error
+		}
+		await
+	loop
+	wtext = ""
+	wtext2 = ""
+	
+	
+	wait 30
+	goto *base_top
+*end_load______________________________________________________________________________________________________________________________________________________________
+*base_top
+	cls
+	log "本拠地"
+	mes "本拠地です"
+	mes "ステージを選択してください"
+	button "簡単",*battle_easy
+	button "普通",*battle_mid
+	button "難し",*battle_hard
+	button gosub "保存",*game_save
+	stop
+*battle_easy
+	stage = 0
+	log "簡単ステージに移動"
+	goto *game_field_start
+*battle_mid
+	stage = 1
+	log "普通ステージに移動"
+	goto *game_field_start
+*battle_hard
+	stage = 2
+	log "難ステージに移動"
+	goto *game_field_start
+*game_field_start
+	cls
+	log "フィールド一回目"
+	mes "フィールド"
+	
+	button "歩く",*game_field_check
+	stop
+*game_field_check
+	log "フィールド"
+	cls
+	i = rnd(10)
+	if stage = 0 and i <= 1 {
+		battle_currentenemyID = 1
+		goto *battle_start
+	}
+	
+	if stage = 1 and i <= 1 {
+		battle_currentenemyID = 1
+		goto *battle_start
+	}
+	if stage = 1 and i > 1 and i <= 2 {
+		battle_currentenemyID = 2
+		goto *battle_start
+	}
+	
+	if stage = 2 and i <= 1 {
+		battle_currentenemyID = 2
+		goto *battle_start
+	}
+	if stage = 2 and i > 1 and i <= 3 {
+		battle_currentenemyID = 3
+		goto *battle_start
+	}
+	if stage = 3 and i <= 3 {
+		battle_currentenemyID = 3
+		goto *battle_start
+	}
+	if i == 9 {
+		goto *stage_clear
+	}
+	mes "フィールド"
+	button "歩く",*game_field_check
+	stop
+*battle_start
+	cls
+	log "戦闘開始"
+	enemy_hp = rnd(enemieshpr(battle_currentenemyID)) + enemieshp(battle_currentenemyID)
+	enemy_name = enemies_name(battle_currentenemyID)
+	mes "" + enemy_name + "が現れた!"
+	wait 50
+	goto *battle_myturn
+*battle_myturn
+	cls
+	log "戦闘中-攻撃中/" + common_myhp + "-" + enemy_hp
+	mes "あなたのターンです。
+	button "殴る",*battle_attack
+	button "魔法",*battle_spell
+	button "逃げる",*battle_exit
+	button "アイテム",*battle_item
+	if common_mylevel > 0 {
+		button "回復",*battle_recovery
+	}
+	stop
+*battle_attack
+	cls
+	
+	mes "攻撃!"
+	battle_attackamount = rnd(10)+30+rnd(5)*common_mylevel
+	enemy_hp -= battle_attackamount
+	mes "" + battle_attackamount + "のダメージ！"
+	mes "敵のHPは" + enemy_hp + "！"
+	log "殴り:" + battle_attackamount + "のダメージ/残" + enemy_hp
+	if enemy_hp < 1 {
+		wait 50
+		goto *battle_win
+	}
+	button "次",*battle_enemy_turn
+	stop
+*battle_spell
+	cls
+	mes "攻撃!"
+	battle_attackamount = rnd(70+common_mylevel*5)+20
+	enemy_hp -= battle_attackamount
+	mes "" + battle_attackamount + "のダメージ！"
+	log "魔法:" + battle_attackamount + "のダメージ/残" + enemy_hp
+	mes "敵のHPは" + enemy_hp + "！"
+	if enemy_hp < 1{
+		wait 50
+		goto *battle_win
+	}
+	button "つぎ",*battle_enemy_turn
+	stop
+*battle_recovery
+	cls
+	mes "回復!"
+	battle_attackamount = rnd(10)+30+common_mylevel*5
+	common_myhp += battle_attackamount
+	mes "" + battle_attackamount + "の回復！"
+	log "回復:" + battle_attackamount + "の回復/残" + my_hp
+	mes "HPは" + common_myhp + "！"
+	if enemy_hp < 1 {
+		wait 50
+		log "回復により勝利-------------------------------------------------------------------------------------------------------------"
+		goto *battle_win
+	}
+	button "次",*battle_enemy_turn
+	stop
+*battle_item
+	cls
+	log "アイテム?"
+	mes "どれを使う?"
+	pos 0,20
+	button "薬草",*battle_usemedicine
+	pos 100,20
+	mes item_have(0)
+	pos 0,40
+	button "やめる",*battle_myturn
+	stop
+*battle_usemedicine
+	cls
+	
+	if item_have(0) <= 0 {
+		mes "アイテムが足りない"
+		button "戻る",*battle_item
+		stop
+	}
+	mes "薬草を使った"
+	i = rnd(10)+30
+	mes "HPが" + i +"増えた!"
+	
+	item_have(0) --
+	common_myhp += i
+	log "薬草使用:" + i + "の回復/残" + my_hp
+	i = 0
+	button "次",*battle_enemy_turn
+	stop
+*battle_exit
+	cls
+	log "逃走"
+	mes "逃げるは恥だが役に立つ"
+	button "戻る",*game_field_start
+	stop
+*battle_enemy_turn
+	cls
+	mes "攻撃!"
+	battle_attackamount = enemiesAP(battle_currentenemyID) + rnd(enemiesAPr(battle_currentenemyID))
+	common_myhp -= battle_attackamount
+	mes "" + battle_attackamount + "のダメージ！"
+	mes "自分のHPは" + common_myhp + "！"
+	log "相手攻撃:" + battle_attackamount + "のダメージ/残" + my_hp
+	if common_myhp < 1 {
+		wait 50
+		goto *battle_lose
+	}
+	button "つぎ",*battle_myturn
+	stop
+*battle_win
+	cls
+	log "勝利"
+	mes "勝ちました"
+	battle_myexpadd = enemiesExp(battle_currentenemyID) + rnd(enemiesExpr(battle_currentenemyID))
+	common_myexp += battle_myexpadd
+	battle_oldlevel = common_mylevel
+	common_mylevel = common_myexp/100
+	battle_remainexp = common_mylevel*100+100-common_myexp
+	mes "経験値を" + battle_myexpadd + "獲得"
+	mes "現在の経験値は" + common_myexp
+	log "経験値を" + battle_myexpadd + "獲得/現在の経験値は" + common_myexp
+	if common_mylevel != battle_oldlevel{
+		mes "レベルが" + common_mylevel + "になった！"
+		mes "攻撃力があがった!"
+		log "レベルアップ:" + common_mylevel
+		if common_mylevel = 1{
+			mes "回復が使えるようになった！"
+		}
+	}else{
+		mes "現在のレベル:" + common_mylevel + "\n次のレベルまで"+ battle_remainexp
+		log "現在のレベル:" + common_mylevel + "/次のレベルまで"+ battle_remainexp
+	}
+	if rnd(4) = 1 {
+		mes "薬草を手に入れた!"
+		item_have(0) ++
+		log "薬草入手:残"+ item_have(0)
+	}
+	button "戻る",*game_field_start
+	stop
+*battle_lose
+	cls
+	log "敗北"
+	mes "負けちゃいました☆テヘペロ"
+	stop
+*stage_clear
+	cls
+	log "ステージクリア"
+	mes "ステージクリア!"
+	button "戻る",*base_top
+	stop
+*game_save
+	cls
+	log "セーブ確認"
+	mes "セーブしますか?"
+	button "はい",*game_save_real
+	button "いいえ",*game_save_cansel
+	stop
+*game_save_real
+	cls
+	log "セーブ開始"
+	dialog "svm",17,"マジカルクエストセーブファイル"
+	if stat != 1 {
+		mes "セーブに失敗しました"
+		button "戻る",*game_save
+		stop
+	}
+	mes "セーブしています..."
+	wtext = ""
+	notesel wtext
+	noteadd "1"
+	noteadd str(common_myhp)
+	noteadd str(common_myexp)
+	noteadd str(item_have(0))
+	notesave refstr
+	mes "セーブしました"
+	log "セーブ完了"
+	button "戻る",*game_save
+	stop
+*game_save_cansel
+	goto *base_top
+*prog_error
+	log "エラー!"
+	log "ID:" + wparam
+	log "line:" + lparam
+	log "debug1:" + prog_debug1
+	log "debug2:" + prog_debug2
+	screen 0,640,480
+	cls
+	pos 0,0
+	color 255
+	font msgothic,18,1
+	boxf
+	color
+	mes "エラーが発生しました。"
+	mes "エラーの種類は次の通りです:" + wparam
+	mes "エラーの報告の際には次のエラー番号も教えてください:" + lparam
+	if iparam != 0 {
+		color 255,255,255
+		mes "iパラメータの値:" + iparam
+		color
+	}
+	mes "エラーの原因:" + prog_debug1
+	mes "エラーの原因:" + prog_debug2
+	mes
+	mes "問題に覚えがない場合、報告をお願いします。"
+	mes "あなたの報告がこのゲームの改善につながるかもしれません。"
+	mes "次の行にエラー原因が表示されています。"
+	mes "※推測であるため、間違っている場合もあります。"
+	color ,255
+	
+	if wparam = 0 {
+		mes "上のエラー原因を参照してください。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 1 {
+		mes "このエラーの原因は不明です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+		mes "参考までに、多くの場合は実行ファイル自体の破損が原因です。"
+	}
+	if wparam = 2 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "原因はプログラムの書き方が間違っていたことです。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 3 {
+		mes "内部で値が異常になりました。"
+		mes "ユーザに原因がある場合がありますが、多くは制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 4 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 5 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 6 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 7 {
+		mes "このエラーは不正なメモリにアクセスしたことが原因です。"
+		mes "ユーザに原因がある場合がありますが、多くは制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 8 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 9 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 10 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 11 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはゲームを終了せずに特定の部分をプレイしたときに発生
+		mes "しやすいです。"
+		mes "このエラーはチートを使用しているなどの場合を除き制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 12 {
+		mes "このエラーはファイルの破損が原因です。"
+		mes "このエラーは削除してはいけないファイルを削除したことが原因です。"
+		mes "制作者にご連絡をいただけたら修正できると思われます。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 13 {
+		mes "このエラーは画像ファイルの破損が原因です。"
+		mes "このエラーは削除してはいけないファイルを削除したことが原因です。"
+		mes "制作者にご連絡をいただけたら修正できると思われます。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 14 {
+		mes "このエラーは実行ファイルの破損が原因です。"
+		mes "このエラーはファイルを削除したことが原因です。"
+		mes "制作者にご連絡をいただけたら改善できるかもしれません。"
+		mes "特定の状況で発生する場合、その機能を使用しないことが可能なら"
+		mes "そうしてください。"
+	}
+	if wparam = 15 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはゲームを終了せずに特定の部分を"
+		mes "繰り返しプレイしたときに発生しやすいです。"
+		mes "このエラーはチートを使用しているなどの場合を除き制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 16 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 17 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 18 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 19 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "ちなみに原因は0で除算したことが原因です。"
+		mes "一般に、このエラーは一部の場合を除き制作者のミスです。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 20 {
+		mes "メモリの取得に失敗しました。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 21 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 22 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です
+		mes "このエラーは致命的です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 23 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 24 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 25 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 26 {
+		mes "このエラーは主にメモリが確保できなかったことが原因です。"
+		mes "このエラーは致命的です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 27 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 28 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 29 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 30 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 31 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 32 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	
+	}
+	if wparam = 33 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 34 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 35 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 36 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 37 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 38 {
+		mes "このエラーはDLLファイルの破損が原因です。"
+		mes "必要なファイルを削除していないか確認してください。"
+	}
+	if wparam = 39 {
+		mes "このエラーは外部ファイルの破損が原因です。"
+		mes "必要なファイルを削除していないか確認してください。"
+		mes "それでも再度起こる場合、報告をお願いします。"
+	}
+	if wparam = 40 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	if wparam = 41 {
+		mes "このエラーはプログラムの内容が間違っていることが原因です。"
+		mes "このエラーはたいてい制作者のミスです。"
+		mes "報告をお願いします。"
+	}
+	font msgothic,18
+	color 255,255,255
+	mes "報告の手順"
+	mes "①、次の数字を伝える。"
+	if prog_debug1 == "" {
+		mes "" + wparam + "-" + lparam + "-0"
+		mes "②、何をしていたらこうなったのか伝える。"
+		mes "③、自分の連絡先を告げる。"
+	}else{
+		mes "" + wparam + "-" + lparam + "-" + prog_errc
+		mes "②、何をしていたらこうなったのか伝える。"
+		mes "③、自分の連絡先を告げる。"
+		mes "次のエラーメッセージを告げる。"
+		mes prog_debug1
+		mes prog_debug2
+	}

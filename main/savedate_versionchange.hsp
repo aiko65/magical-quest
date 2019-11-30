@@ -1,0 +1,44 @@
+screen 0,300,80
+title "セーブデータバージョン変換ツール"
+mes "ここに変換先のバージョン番号を入力"
+a = ""
+input a
+button "やれ",*conversion
+stop
+*conversion
+	cls
+	dialog "svm",16,"マジカルクエストセーブファイル"
+	if stat == 0 {
+		mes "失敗しました"
+		mes "理由:ファイルのロードに失敗"
+		stop
+	}
+	b = ""
+	c = ""
+	notesel b
+	noteload refstr
+	noteget c,0
+	if c = 0 and a = 0 : goto *trance0_0
+	if c = 0 and a = 1 : goto *trance0_1
+	if c = 1 and a = 0 : goto *trance1_0
+	if c = 1 and a = 1 : goto *trance1_1
+	mes "失敗しました"
+	mes "理由:バージョンに未対応"
+	stop
+*trance0_0
+	mes "※同一バージョンのため変更しませんでした"
+	goto *tend
+*trance0_1
+	noteadd "1",0,1
+	noteadd "0",3,1
+	goto *tend
+*trance1_0
+	noteadd "0",0,1
+	notedel 3
+	goto *tend
+*trance1_1
+	mes "※同一バージョンのため変更しませんでした"
+	goto *tend
+*tend
+	mes "変換終了"
+	notesave refstr

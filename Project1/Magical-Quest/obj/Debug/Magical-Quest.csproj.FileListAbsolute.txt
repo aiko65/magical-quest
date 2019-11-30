@@ -1,8 +1,0 @@
-C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\Magical-Quest\bin\Debug\Magical-Quest.exe.config
-C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\Magical-Quest\bin\Debug\Magical-Quest.exe
-C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\Magical-Quest\bin\Debug\Magical-Quest.pdb
-C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\Magical-Quest\obj\Debug\Magical-Quest.csprojAssemblyReference.cache
-C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\Magical-Quest\obj\Debug\Magical-Quest.exe
-C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\Magical-Quest\obj\Debug\Magical-Quest.pdb
-C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\Magical-Quest\obj\Debug\Magical_Quest.Form2.resources
-C:\Users\技術家庭情報科\Documents\GitHub\magical-quest\Project1\Magical-Quest\obj\Debug\Magical-Quest.csproj.GenerateResource.cache
