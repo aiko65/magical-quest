@@ -82,6 +82,9 @@
 	log "配列初期化完了"
 *game_title
 	cls
+	#ifdef _debug
+	goto *game_start_nodate
+	#endif
 	mes "マジカルクエスト"
 	button "はじめから",*game_start_nodate
 	button "つづきから",*game_start_continue
@@ -317,6 +320,10 @@
 	goto *base_top
 *end_load______________________________________________________________________________________________________________________________________________________________
 *base_top
+	screen 0,1080,720
+	#ifdef _debug
+	goto *battle_start
+	#endif
 	cls
 	log "本拠地"
 	mes "本拠地です"
@@ -384,153 +391,198 @@
 *battle_start
 	cls
 	log "戦闘開始"
-	enemy_hp = rnd(enemieshpr(battle_currentenemyID)) + enemieshp(battle_currentenemyID)
-	enemy_name = enemies_name(battle_currentenemyID)
-	mes "" + enemy_name + "が現れた!"
 	wait 50
-	goto *battle_myturn
-*battle_myturn
-	/*
-	cls
-	log "戦闘中-攻撃中/" + common_myhp + "-" + enemy_hp
-	mes "あなたのターンです。
-	button "殴る",*battle_attack
-	button "魔法",*battle_spell
-	button "逃げる",*battle_exit
-	button "アイテム",*battle_item
-	if common_mylevel > 0 {
-		button "回復",*battle_recovery
+dim battle_timedbg,10
+battle_scene = 0
+/*
+0:行動選択
+1:行動中
+2:逃げる
+3:敗北
+4:勝利
+*/
+repeat
+redraw 0
+color 255,255,255
+boxf
+battle_timedbg(0) = gettime(5)*60000+gettime(6)*1000+gettime(7)
+switch battle_scene
+	case 0
+		gosub *battle_chose
+	swbreak
+	case 1
+		gosub *battle_attacking
+	swbreak
+	case 2
+		gosub *battle_exit
+	swbreak
+	case 3
+		gosub *battle_lose
+	swbreak
+	case 4
+		gosub *battle_win
+	swbreak
+swend
+battle_timedbg(1) = gettime(5)*60000+gettime(6)*1000+gettime(7)
+flamet = battle_timedbg(1)-battle_timedbg(0)
+if cnt\100 = 0 : log "★全体バトル処理時間★" + flamet
+redraw 1
+await 16
+loop
+*battle_chose
+	color
+	pos 0,0
+	font msgothic,16
+	mes "どこどこ村・どこそこ"
+
+	getkey isclick,1
+
+	line 100,300,380,300
+	line 380,300,380,400
+	line 380,400,100,400
+	line 100,400,100,300
+	color 220,220,220
+	boxf 102,302,378,398
+	color 
+	pos 140,300
+	font msgothic,100
+	mes "殴る"
+	if mousex > 100 and mousey > 300 and mousex < 380 and mousey < 400{
+		color 255,0,0
+		boxf 102,302,378,398
+		color 
+		pos 140,300
+		font msgothic,100
+		mes "殴る"
+		if isclick = 1{
+			dowhat = 0
+			battle_scene = 1
+		}
 	}
-	stop
-*battle_attack
-	cls
+
+	color
+	line 400,300,680,300
+	line 680,300,680,400
+	line 680,400,400,400
+	line 400,400,400,300
+	color 220,220,220
+	boxf 402,302,678,398
+	color 
+	pos 440,300
+	font msgothic,100
+	mes "自殺"
+	if mousex > 400 and mousey > 300 and mousex < 680 and mousey < 400{
+		color 255,0,0
+		boxf 402,302,678,398
+		color 
+		pos 440,300
+		font msgothic,100
+		mes "自殺"
+		if isclick = 1{
+			battle_scene = 3
+		}
+	}
 	
-	mes "攻撃!"
-	battle_attackamount = rnd(10)+30+rnd(5)*common_mylevel
-	enemy_hp -= battle_attackamount
-	mes "" + battle_attackamount + "のダメージ！"
-	mes "敵のHPは" + enemy_hp + "！"
-	log "殴り:" + battle_attackamount + "のダメージ/残" + enemy_hp
-	if enemy_hp < 1 {
-		wait 50
-		goto *battle_win
+	line 700,300,980,300
+	line 980,300,980,400
+	line 980,400,700,400
+	line 700,400,700,300
+	color 220,220,220
+	boxf 702,302,978,398
+	color 
+	pos 740,300
+	font msgothic,100
+	mes "逃走"
+	if mousex > 700 and mousey > 300 and mousex < 980 and mousey < 400{
+		color 255,0,0
+		boxf 702,302,978,398
+		color 
+		pos 740,300
+		font msgothic,100
+		mes "逃走"
+		if isclick = 1{
+			battle_scene = 2
+		}
 	}
-	button "次",*battle_enemy_turn
-	stop
-*battle_spell
-	cls
-	mes "攻撃!"
-	battle_attackamount = rnd(70+common_mylevel*5)+20
-	enemy_hp -= battle_attackamount
-	mes "" + battle_attackamount + "のダメージ！"
-	log "魔法:" + battle_attackamount + "のダメージ/残" + enemy_hp
-	mes "敵のHPは" + enemy_hp + "！"
-	if enemy_hp < 1{
-		wait 50
-		goto *battle_win
-	}
-	button "つぎ",*battle_enemy_turn
-	stop
-*battle_recovery
-	cls
-	mes "回復!"
-	battle_attackamount = rnd(10)+30+common_mylevel*5
-	common_myhp += battle_attackamount
-	mes "" + battle_attackamount + "の回復！"
-	log "回復:" + battle_attackamount + "の回復/残" + my_hp
-	mes "HPは" + common_myhp + "！"
-	if enemy_hp < 1 {
-		wait 50
-		log "回復により勝利-------------------------------------------------------------------------------------------------------------"
-		goto *battle_win
-	}
-	button "次",*battle_enemy_turn
-	stop
-*battle_item
-	cls
-	log "アイテム?"
-	mes "どれを使う?"
-	pos 0,20
-	button "薬草",*battle_usemedicine
-	pos 100,20
-	mes item_have(0)
-	pos 0,40
-	button "やめる",*battle_myturn
-	stop
-*battle_usemedicine
-	cls
+	return
+*battle_attacking
+	color
+	pos 0,0
+	font msgothic,16
+	mes "どこどこ村・どこそこ"
+
+	getkey isclick,1
+
+	pos 0,0
+	font msgothic,50
+	mes "うがー"
 	
-	if item_have(0) <= 0 {
-		mes "アイテムが足りない"
-		button "戻る",*battle_item
-		stop
-	}
-	mes "薬草を使った"
-	i = rnd(10)+30
-	mes "HPが" + i +"増えた!"
 	
-	item_have(0) --
-	common_myhp += i
-	log "薬草使用:" + i + "の回復/残" + my_hp
-	i = 0
-	button "次",*battle_enemy_turn
-	stop
+	line 100,300,380,300
+	line 380,300,380,400
+	line 380,400,100,400
+	line 100,400,100,300
+	color 220,220,220
+	boxf 102,302,378,398
+	color 
+	pos 140,300
+	font msgothic,100
+	mes "OK"
+	if mousex > 100 and mousey > 300 and mousex < 380 and mousey < 400{
+		color 255,0,0
+		boxf 102,302,378,398
+		color 
+		pos 140,300
+		font msgothic,100
+		mes "OK"
+		if isclick = 1{
+			dowhat = 0
+			battle_scene = 0
+		}
+	}
+
+	color
+	line 400,300,680,300
+	line 680,300,680,400
+	line 680,400,400,400
+	line 400,400,400,300
+	color 220,220,220
+	boxf 402,302,678,398
+	color 
+	pos 440,300
+	font msgothic,100
+	mes "なぜ勝たない"
+	if mousex > 400 and mousey > 300 and mousex < 680 and mousey < 400{
+		color 255,0,0
+		boxf 402,302,678,398
+		color 
+		pos 440,300
+		font msgothic,100
+		mes "なぜ勝たない"
+		if isclick = 1{
+			battle_scene = 4
+		}
+	}
+	return
 *battle_exit
 	cls
 	log "逃走"
 	mes "逃げるは恥だが役に立つ"
 	button "戻る",*game_field_start
 	stop
-*battle_enemy_turn
-	cls
-	mes "攻撃!"
-	battle_attackamount = enemiesAP(battle_currentenemyID) + rnd(enemiesAPr(battle_currentenemyID))
-	common_myhp -= battle_attackamount
-	mes "" + battle_attackamount + "のダメージ！"
-	mes "自分のHPは" + common_myhp + "！"
-	log "相手攻撃:" + battle_attackamount + "のダメージ/残" + my_hp
-	if common_myhp < 1 {
-		wait 50
-		goto *battle_lose
-	}
-	button "つぎ",*battle_myturn
-	stop
 *battle_win
 	cls
 	log "勝利"
 	mes "勝ちました"
-	battle_myexpadd = enemiesExp(battle_currentenemyID) + rnd(enemiesExpr(battle_currentenemyID))
-	common_myexp += battle_myexpadd
-	battle_oldlevel = common_mylevel
-	common_mylevel = common_myexp/100
-	battle_remainexp = common_mylevel*100+100-common_myexp
-	mes "経験値を" + battle_myexpadd + "獲得"
-	mes "現在の経験値は" + common_myexp
-	log "経験値を" + battle_myexpadd + "獲得/現在の経験値は" + common_myexp
-	if common_mylevel != battle_oldlevel{
-		mes "レベルが" + common_mylevel + "になった！"
-		mes "攻撃力があがった!"
-		log "レベルアップ:" + common_mylevel
-		if common_mylevel == 1{
-			mes "回復が使えるようになった！"
-		}
-	}else{
-		mes "現在のレベル:" + common_mylevel + "\n次のレベルまで"+ battle_remainexp
-		log "現在のレベル:" + common_mylevel + "/次のレベルまで"+ battle_remainexp
-	}
-	if rnd(4) == 1 {
-		mes "薬草を手に入れた!"
-		item_have(0) ++
-		log "薬草入手:残"+ item_have(0)
-	}
 	button "戻る",*game_field_start
 	stop
+	
 *battle_lose
 	cls
 	log "敗北"
 	mes "負けちゃいました☆テヘペロ"
 	stop
-*/
+
 *stage_clear
 	cls
 	log "ステージクリア"
