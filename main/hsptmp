@@ -48,13 +48,10 @@
 	common_mylevel = 0
 	battle_attackamount = 0
 	enemy_hp = 0
-	battle_remainexp = 0
-	battle_oldlevel = 0
-	battle_myexpadd = 0
 	game_savedatep = 0
 	game_load_status = 0
 	battle_currentenemyID = 0
-	
+mas "a"
 	i = 0
 	j = 0
 	k = 0
